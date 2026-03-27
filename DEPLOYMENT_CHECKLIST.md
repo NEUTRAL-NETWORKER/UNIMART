@@ -15,6 +15,7 @@ Release metadata:
 - [ ] Branch is up to date with target branch.
 - [ ] Pull request is reviewed and merged policy is satisfied.
 - [ ] GitHub Actions CI is green for latest commit.
+- [ ] GitHub Actions Deploy workflow is green for latest commit (or latest dispatch run).
 - [ ] No local-only files are committed (.env, node_modules, venv, dist, cache files).
 - [ ] Database backup snapshot has been taken.
 - [ ] Rollback package (previous stable image/build) is available.
@@ -52,6 +53,12 @@ Release metadata:
 ### Frontend required
 
 - [ ] VITE_API_URL points to public backend API base and ends with /api
+- [ ] VITE_APP_BASENAME is set appropriately for host target (`/` for root, repo name for GitHub Pages)
+
+### GitHub repository deployment config
+
+- [ ] Repository variable or secret `FRONTEND_VITE_API_URL` is configured.
+- [ ] Optional secret `BACKEND_DEPLOY_HOOK_URL` is configured if backend host supports deploy hooks.
 
 ## 04. Database and Schema
 
@@ -90,11 +97,12 @@ python run_scheduler.py
 ## 06. Deploy Execution
 
 - [ ] Put system in maintenance/low-traffic deployment window (if required).
-- [ ] Deploy backend artifact.
+- [ ] Trigger `.github/workflows/deploy.yml` (or push to main).
+- [ ] Deploy backend artifact (GHCR image and/or platform deploy hook).
 - [ ] Run alembic upgrade head.
 - [ ] Start/restart backend workers.
 - [ ] Start/restart scheduler process.
-- [ ] Deploy frontend artifact.
+- [ ] Deploy frontend artifact (GitHub Pages workflow job).
 - [ ] Purge CDN/cache layer if used.
 
 ## 07. Post-Deploy Smoke Checks

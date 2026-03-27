@@ -1,6 +1,15 @@
 import axios from "axios";
 
 const VITE_API_URL = import.meta.env.VITE_API_URL;
+const APP_BASE_URL = import.meta.env.BASE_URL || "/";
+
+const appPath = (path) => {
+  const normalizedBase = APP_BASE_URL.endsWith("/")
+    ? APP_BASE_URL.slice(0, -1)
+    : APP_BASE_URL;
+  return `${normalizedBase}${path}`;
+};
+
 if (!VITE_API_URL && import.meta.env.PROD) {
   throw new Error("VITE_API_URL is required in production build/runtime");
 }
@@ -32,8 +41,9 @@ adminApi.interceptors.response.use(
     if (error.response?.status === 401) {
       localStorage.removeItem("unimart_admin_token");
       localStorage.removeItem("unimart_admin");
-      if (window.location.pathname !== "/admin/login") {
-        window.location.href = "/admin/login";
+      const adminLoginPath = appPath("/admin/login");
+      if (window.location.pathname !== adminLoginPath) {
+        window.location.href = adminLoginPath;
       }
     }
     return Promise.reject(error);

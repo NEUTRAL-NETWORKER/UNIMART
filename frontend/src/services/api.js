@@ -2,6 +2,14 @@ import axios from 'axios';
 
 const VITE_API_URL = import.meta.env.VITE_API_URL;
 const IS_PROD = import.meta.env.PROD;
+const APP_BASE_URL = import.meta.env.BASE_URL || '/';
+
+const appPath = (path) => {
+  const normalizedBase = APP_BASE_URL.endsWith('/')
+    ? APP_BASE_URL.slice(0, -1)
+    : APP_BASE_URL;
+  return `${normalizedBase}${path}`;
+};
 
 if (!VITE_API_URL && IS_PROD) {
   throw new Error('VITE_API_URL is required in production build/runtime');
@@ -72,8 +80,10 @@ api.interceptors.response.use(
           localStorage.removeItem("unimart_token");
           localStorage.removeItem("unimart_refresh_token");
           localStorage.removeItem("unimart_user");
-          if (window.location.pathname !== "/login" && window.location.pathname !== "/register") {
-            window.location.href = "/login";
+          const loginPath = appPath('/login');
+          const registerPath = appPath('/register');
+          if (window.location.pathname !== loginPath && window.location.pathname !== registerPath) {
+            window.location.href = loginPath;
           }
           return Promise.reject(refreshError);
         }
@@ -83,8 +93,10 @@ api.interceptors.response.use(
       localStorage.removeItem("unimart_token");
       localStorage.removeItem("unimart_refresh_token");
       localStorage.removeItem("unimart_user");
-      if (window.location.pathname !== "/login" && window.location.pathname !== "/register") {
-        window.location.href = "/login";
+      const loginPath = appPath('/login');
+      const registerPath = appPath('/register');
+      if (window.location.pathname !== loginPath && window.location.pathname !== registerPath) {
+        window.location.href = loginPath;
       }
       return Promise.reject(error);
     }

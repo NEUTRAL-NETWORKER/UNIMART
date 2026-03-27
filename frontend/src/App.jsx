@@ -12,6 +12,11 @@ import Toast from './components/common/Toast';
 import AppRoutes from './routes/AppRoutes';
 import { useBackNavigation } from './hooks/useBackNavigation';
 
+function resolveRouterBasename() {
+  const baseUrl = import.meta.env.BASE_URL || '/';
+  return baseUrl === '/' ? '/' : baseUrl.replace(/\/+$/, '');
+}
+
 function BackNavigationHandler() {
   useBackNavigation();
   return null;
@@ -47,9 +52,11 @@ function AppLayout() {
 }
 
 export default function App() {
+  const routerBasename = resolveRouterBasename();
+
   return (
     <ErrorBoundary>
-      <BrowserRouter>
+      <BrowserRouter basename={routerBasename}>
         <ThemeProvider>
           <AuthProvider>
             <OrderProvider>
