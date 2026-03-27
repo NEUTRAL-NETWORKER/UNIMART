@@ -238,3 +238,7 @@ Local/manual release flow:
 - Keep JWT secrets and SMTP credentials out of source control.
 - Restrict CORS to known domains only.
 - Prefer HTTPS termination at ingress/load balancer.
+
+## 14. License
+
+This project is licensed under the Apache License 2.0.
