@@ -13,15 +13,13 @@ jobs:
   backend-image:
     name: Build And Publish Backend Image
     runs-on: ubuntu-latest
+    continue-on-error: true
     permissions:
       contents: read
       packages: write
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
-      - name: Set Up Docker Buildx
-        uses: docker/setup-buildx-action@v3
 
       - name: Login To GHCR
         uses: docker/login-action@v3
@@ -30,28 +28,28 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Docker Metadata
-        id: meta
-        uses: docker/metadata-action@v5
-        with:
-          images: ghcr.io/${{ github.repository_owner }}/unimart-backend
-          tags: |
-            type=raw,value=latest
-            type=sha
+      - name: Prepare Image Name
+        id: image
+        run: |
+          OWNER_LOWER=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
+          echo "name=ghcr.io/${OWNER_LOWER}/unimart-backend" >> "$GITHUB_OUTPUT"
 
-      - name: Build And Push
-        uses: docker/build-push-action@v6
-        with:
-          context: backend
-          file: backend/Dockerfile
-          push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
+      - name: Build Backend Image
+        run: |
+          docker build \
+            -f backend/Dockerfile \
+            -t "${{ steps.image.outputs.name }}:latest" \
+            -t "${{ steps.image.outputs.name }}:${{ github.sha }}" \
+            backend
+
+      - name: Push Backend Image
+        run: |
+          docker push "${{ steps.image.outputs.name }}:latest"
+          docker push "${{ steps.image.outputs.name }}:${{ github.sha }}"
 
   frontend-pages:
     name: Deploy Frontend To GitHub Pages
     runs-on: ubuntu-latest
-    needs: backend-image
     permissions:
       contents: read
       pages: write
@@ -110,6 +108,7 @@ jobs:
     name: Trigger Backend Platform Deploy
     runs-on: ubuntu-latest
     needs: backend-image
+    if: ${{ always() && needs.backend-image.result == 'success' }}
     steps:
       - name: Trigger Deploy Hook
         env:
