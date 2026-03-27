@@ -1,0 +1,103 @@
+/* ════════════════════════════════════════════
+   UNIMART LANDING v6 — landing.css
+   ════════════════════════════════════════════ */
+
+/* Hide default cursor only on landing page */
+.lnd-cursor-hidden,
+.lnd-cursor-hidden * {
+  cursor: none !important;
+}
+
+.lnd *, .lnd *::before, .lnd *::after {
+  box-sizing: border-box; margin: 0; padding: 0;
+}
+
+/* ─── MAIN CONTENT KEYFRAMES ──────────────────────────── */
+
+/* RGB colour cycle — animates background-position to shift gradient colours */
+@keyframes lnd-rgb-cycle {
+  0%   { background-position: 0%   100%; }
+  100% { background-position: 400% 100%; }
+}
+
+@keyframes lnd-shimmer {
+  0%   { background-position: -300% center; }
+  100% { background-position:  300% center; }
+}
+
+@keyframes lnd-scan {
+  from { top: -3px; } to { top: 100%; }
+}
+
+@keyframes lnd-fade-up {
+  0%   { opacity: 0; transform: translateY(18px); }
+  100% { opacity: 1; transform: translateY(0);    }
+}
+
+@keyframes lnd-card-in {
+  0%   { opacity: 0; transform: translateY(28px) scale(0.96); }
+  100% { opacity: 1; transform: translateY(0)    scale(1);    }
+}
+
+@keyframes lnd-portal-glow {
+  0%,100% { box-shadow: 0 0 20px var(--pc), 0 0 55px var(--pc-dim),  inset 0 0 20px var(--pc-dim); }
+  50%     { box-shadow: 0 0 38px var(--pc), 0 0 100px var(--pc-dim), inset 0 0 38px var(--pc-dim); }
+}
+
+@keyframes lnd-ring {
+  0%   { transform: scale(1);   opacity: 0.5; }
+  100% { transform: scale(2.2); opacity: 0;   }
+}
+
+@keyframes lnd-icon-float {
+  0%,100% { transform: translateY(0)    rotate(0deg); }
+  50%     { transform: translateY(-7px) rotate(4deg); }
+}
+
+@keyframes lnd-social-in {
+  0%   { opacity: 0; transform: scale(0.5) rotate(-20deg); }
+  100% { opacity: 1; transform: scale(1)   rotate(0deg);   }
+}
+
+/* ─── INTERACTIVE ───────────────────────────── */
+.lnd-portal-btn {
+  transition: transform 0.2s cubic-bezier(0.34,1.5,0.64,1), box-shadow 0.22s ease, border-color 0.18s ease;
+}
+.lnd-portal-btn:hover  { transform: scale(1.09) translateY(-7px) !important; }
+.lnd-portal-btn:active { transform: scale(0.93) !important; }
+
+/* Transparent card — outline only */
+.lnd-card {
+  background: transparent !important;
+  border: 1px solid rgba(255,255,255,0.22) !important;
+  transition: transform 0.22s ease, box-shadow 0.22s ease, border-color 0.18s ease;
+}
+.lnd-card:hover {
+  transform: translateY(-5px) scale(1.02);
+  border-color: rgba(255,255,255,0.55) !important;
+  box-shadow: 0 0 28px rgba(255,255,255,0.07);
+}
+
+/* Social icon buttons */
+.lnd-social-btn {
+  transition: transform 0.18s ease, background 0.18s ease, box-shadow 0.18s ease;
+}
+.lnd-social-btn:hover {
+  transform: scale(1.18) translateY(-3px);
+  background: rgba(0,212,255,0.2) !important;
+  box-shadow: 0 0 20px rgba(0,212,255,0.45);
+  border-color: rgba(0,212,255,0.8) !important;
+}
+.lnd-social-btn:active { transform: scale(0.9); }
+
+.lnd-scanlines {
+  background: repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,0,0,0.04) 3px,rgba(0,0,0,0.04) 4px);
+  pointer-events: none;
+}
+
+@media (max-width: 768px) {
+  .lnd-cards-row   { flex-direction: column !important; align-items: center !important; }
+  .lnd-cards-row > div { width: 100% !important; max-width: 340px; }
+  .lnd-buttons-row { flex-direction: column !important; align-items: center !important; }
+  .lnd-social-row  { gap: 10px !important; }
+}

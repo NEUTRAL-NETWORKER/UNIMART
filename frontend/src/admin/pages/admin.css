@@ -1,0 +1,142 @@
+/* Hacker Matrix Background Grid */
+.admin-bg-grid {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(0,255,65,0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,255,65,0.05) 1px, transparent 1px);
+  background-size: 32px 32px;
+  animation: gridPulse 4s ease-in-out infinite;
+}
+
+@keyframes gridPulse {
+  0%, 100% { opacity: 0.4; }
+  50%       { opacity: 1; }
+}
+
+/* Scanline overlay effect */
+.admin-scanlines {
+  position: fixed;
+  inset: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0, 0, 0, 0.08) 2px,
+    rgba(0, 0, 0, 0.08) 4px
+  );
+  pointer-events: none;
+  z-index: 9999;
+  animation: scanMove 8s linear infinite;
+}
+
+@keyframes scanMove {
+  0%   { background-position: 0 0; }
+  100% { background-position: 0 100px; }
+}
+
+/* CRT flicker */
+@keyframes crtFlicker {
+  0%   { opacity: 1; }
+  92%  { opacity: 1; }
+  93%  { opacity: 0.85; }
+  94%  { opacity: 1; }
+  96%  { opacity: 0.9; }
+  100% { opacity: 1; }
+}
+
+.admin-crt {
+  animation: crtFlicker 5s ease-in-out infinite;
+}
+
+/* Matrix falling digits canvas */
+.admin-matrix-canvas {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.18;
+}
+
+/* Glitch text effect */
+@keyframes glitch {
+  0%  { text-shadow: 2px 0 #ff0033, -2px 0 #00ff41; }
+  20% { text-shadow: -2px 0 #ff0033, 2px 0 #00ff41; }
+  40% { text-shadow: 2px 2px #ff0033, -2px -2px #00ff41; }
+  60% { text-shadow: -2px 0 #ff0033, 2px 0 #00ff41; clip-path: inset(5% 0 90% 0); }
+  80% { text-shadow: 2px 0 #ff0033, -2px 0 #00ff41; }
+  100%{ text-shadow: none; }
+}
+
+.admin-glitch {
+  animation: glitch 6s ease-in-out infinite;
+}
+
+/* Neon glow pulse for primary elements */
+@keyframes neonPulse {
+  0%, 100% { box-shadow: 0 0 5px #00ff41, 0 0 10px #00ff41, 0 0 20px #00ff41; }
+  50%       { box-shadow: 0 0 10px #00ff41, 0 0 25px #00ff41, 0 0 50px #00ff41; }
+}
+
+.admin-neon-border {
+  animation: neonPulse 2s ease-in-out infinite;
+}
+
+/* Terminal cursor blink */
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0; }
+}
+
+.admin-cursor::after {
+  content: "_";
+  animation: blink 1s step-start infinite;
+  color: #00ff41;
+}
+
+/* Admin sidebar hacker style */
+.admin-sidebar-link {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  color: #00b32c;
+  letter-spacing: 0.05em;
+  transition: all 0.15s;
+}
+
+.admin-sidebar-link:hover {
+  color: #00ff41;
+  text-shadow: 0 0 8px rgba(0, 255, 65, 0.6);
+}
+
+.admin-sidebar-link.active {
+  color: #00ff41;
+  text-shadow: 0 0 12px rgba(0, 255, 65, 0.8);
+}
+
+/* Scrollbar hacker style */
+::-webkit-scrollbar {
+  width: 4px;
+}
+
+::-webkit-scrollbar-track {
+  background: #000500;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #003d0c;
+  border-radius: 2px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #00ff41;
+}
+
+/* Live dashboard indicator pulse */
+@keyframes pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%       { opacity: 0.4; transform: scale(0.85); }
+}
+
