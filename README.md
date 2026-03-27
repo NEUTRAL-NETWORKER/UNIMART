@@ -220,7 +220,3 @@ Minimum release flow:
 - Keep JWT secrets and SMTP credentials out of source control.
 - Restrict CORS to known domains only.
 - Prefer HTTPS termination at ingress/load balancer.
-
-## 14. License
-
-No license file is currently present. Add a LICENSE file (for example MIT or Apache-2.0) before public distribution.
