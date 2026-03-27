@@ -206,13 +206,14 @@ Use DEPLOYMENT_CHECKLIST.md as the release gate.
 
 Minimum GitHub release flow:
 
-1. Configure repository variable or secret: `FRONTEND_VITE_API_URL=https://<backend-domain>/api`.
-2. Optional: configure secret `BACKEND_DEPLOY_HOOK_URL` for Render/Railway/Fly deploy webhook.
-3. Push to `main` (or run workflow dispatch for `.github/workflows/deploy.yml`).
-4. Apply migrations on backend target: `alembic upgrade head`.
-5. Validate health endpoint and login flow.
-6. Start only one scheduler process.
-7. Run post-deploy smoke checks for orders, OTP, and notifications.
+1. Recommended: set repository variable or secret `FRONTEND_VITE_API_URL=https://<backend-domain>/api`.
+2. Optional: set repository variable `ENABLE_BACKEND_IMAGE_PUBLISH=true` to publish backend image to GHCR.
+3. Optional: configure secret `BACKEND_DEPLOY_HOOK_URL` for Render/Railway/Fly deploy webhook.
+4. Push to `main` (or run workflow dispatch for `.github/workflows/deploy.yml`).
+5. Apply migrations on backend target: `alembic upgrade head`.
+6. Validate health endpoint and login flow.
+7. Start only one scheduler process.
+8. Run post-deploy smoke checks for orders, OTP, and notifications.
 
 Local/manual release flow:
 

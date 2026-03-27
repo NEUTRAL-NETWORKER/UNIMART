@@ -57,7 +57,8 @@ Release metadata:
 
 ### GitHub repository deployment config
 
-- [ ] Repository variable or secret `FRONTEND_VITE_API_URL` is configured.
+- [ ] Repository variable or secret `FRONTEND_VITE_API_URL` is configured (recommended).
+- [ ] Optional repository variable `ENABLE_BACKEND_IMAGE_PUBLISH=true` is set if backend GHCR image publish is required.
 - [ ] Optional secret `BACKEND_DEPLOY_HOOK_URL` is configured if backend host supports deploy hooks.
 
 ## 04. Database and Schema
