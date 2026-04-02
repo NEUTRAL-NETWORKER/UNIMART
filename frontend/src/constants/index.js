@@ -69,11 +69,13 @@ export const CAMPUSES = [
 
 export const STUDENT_REGISTRY = {};
 
-// Helper to mask email: "alex.doe@gmail.com" → "a***e@gmail.com"
+// Helper to mask email: "alex.doe@gmail.com" -> "ale***oe@gmail.com"
 export const maskEmail = (email) => {
+  if (!email || !email.includes('@')) return email;
   const [local, domain] = email.split('@');
-  if (local.length <= 2) return local[0] + '***@' + domain;
-  return local[0] + '***' + local[local.length - 1] + '@' + domain;
+  const visiblePrefix = local.slice(0, 3);
+  const visibleSuffix = local.length > 3 ? local.slice(-2) : '';
+  return visiblePrefix + '***' + visibleSuffix + '@' + domain;
 };
 
 export const ORDER_STATUS = {
