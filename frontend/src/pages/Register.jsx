@@ -123,6 +123,7 @@ export default function Register() {
 
     try {
       await api.post('/auth/verify-registration-otp', {
+        register_number: formData.studentId.trim().toUpperCase(),
         email: registryRecord.email,
         otp: enteredOtp,
       });
@@ -148,9 +149,7 @@ export default function Register() {
 
   // ── "I don't have access to mail" → manual email path ──
   const handleNoAccessToMail = () => {
-    setPhase('manual_email');
-    setEnteredOtp('');
-    setOtpError('');
+    showError('For security, OTP can only be sent to your official email linked to this register number. Please contact support if you cannot access it.');
   };
 
   // ── Verify manual email ──
@@ -195,6 +194,7 @@ export default function Register() {
 
     try {
       await api.post('/auth/verify-registration-otp', {
+        register_number: formData.studentId.trim().toUpperCase(),
         email: manualEmail,
         otp: enteredOtp,
       });
