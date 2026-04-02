@@ -15,8 +15,26 @@ class UserSignup(BaseModel):
     register_number: str
     username: str
     password: str
-    personal_mail_id: str
+    personal_mail_id: EmailStr
     phone_number: Optional[str] = None
+
+    @field_validator('password')
+    @classmethod
+    def validate_password_strength(cls, v: str) -> str:
+        if len(v) < 8:
+            raise ValueError('Password must be at least 8 characters long')
+        if len(v) > 128:
+            raise ValueError('Password must be 128 characters or less')
+        if not any(ch.isupper() for ch in v):
+            raise ValueError('Password must include at least one uppercase letter')
+        if not any(ch.islower() for ch in v):
+            raise ValueError('Password must include at least one lowercase letter')
+        if not any(ch.isdigit() for ch in v):
+            raise ValueError('Password must include at least one number')
+        special_chars = set("!@#$%^&*()_+-=[]{};':\"\\|,.<>/?`~")
+        if not any(ch in special_chars for ch in v):
+            raise ValueError('Password must include at least one special character')
+        return v
 
 
 class UserLogin(BaseModel):
@@ -27,7 +45,7 @@ class UserLogin(BaseModel):
 class UserUpdate(BaseModel):
     username: Optional[str] = None
     profile_picture_url: Optional[str] = None
-    personal_mail_id: Optional[str] = None
+    personal_mail_id: Optional[EmailStr] = None
     phone_number: Optional[str] = None
 
 
@@ -98,6 +116,15 @@ class ProductCreate(BaseModel):
     image_url: Optional[str] = None  # Single image (backward compat)
     image_urls: Optional[List[str]] = None  # Multiple images
 
+    @field_validator('price')
+    @classmethod
+    def validate_price(cls, v: float) -> float:
+        if v <= 0:
+            raise ValueError('Price must be greater than 0')
+        if v > 1_000_000:
+            raise ValueError('Price exceeds allowed limit')
+        return v
+
 
 class ProductUpdate(BaseModel):
     title: Optional[str] = None
@@ -106,6 +133,17 @@ class ProductUpdate(BaseModel):
     category: Optional[str] = None
     image_url: Optional[str] = None
     image_urls: Optional[List[str]] = None
+
+    @field_validator('price')
+    @classmethod
+    def validate_price(cls, v: Optional[float]) -> Optional[float]:
+        if v is None:
+            return v
+        if v <= 0:
+            raise ValueError('Price must be greater than 0')
+        if v > 1_000_000:
+            raise ValueError('Price exceeds allowed limit')
+        return v
 
 
 class ProductResponse(BaseModel):

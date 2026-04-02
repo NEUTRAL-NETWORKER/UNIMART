@@ -33,11 +33,30 @@ def get_current_user(
             detail="Invalid token payload",
         )
 
+    token_type = payload.get("token_type", "access")
+    if token_type != "access":
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid token type",
+        )
+
     user = db.query(UserProfile).filter(UserProfile.register_number == register_number).first()
     if user is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="User not found",
+        )
+
+    if getattr(user, "is_deleted", False):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Account is unavailable",
+        )
+
+    if getattr(user, "is_suspended", False):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Account is suspended",
         )
 
     return user

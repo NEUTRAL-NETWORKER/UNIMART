@@ -1,4 +1,5 @@
 import os
+import hmac
 import random
 import re
 import secrets
@@ -19,6 +20,7 @@ from dependencies import get_current_user
 from services.email_service import send_registration_otp_email
 from redis_client import redis_client
 from settings import require_secret, is_production
+from middleware.rate_limit import rate_limit_strict, get_request_ip
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/auth", tags=["Authentication"])
@@ -44,10 +46,24 @@ def log_user_activity(db, register_number: str, username: str, action: str, deta
 
 def _get_client_ip(request: Request) -> str:
     """Extract client IP from request headers."""
-    forwarded = request.headers.get("X-Forwarded-For", "")
-    if forwarded:
-        return forwarded.split(",")[0].strip()
-    return request.client.host if request.client else None
+    return get_request_ip(request)
+
+
+def _normalize_register_number(register_number: str) -> str:
+    return register_number.strip().upper()
+
+
+def _normalize_email(email: str) -> str:
+    return email.strip().lower()
+
+
+def _mask_email(email: str) -> str:
+    local, sep, domain = email.partition("@")
+    if not sep:
+        return email
+    prefix = local[:3]
+    suffix = local[-2:] if len(local) > 3 else ""
+    return f"{prefix}***{suffix}@{domain}"
 
 REFRESH_TOKEN_EXPIRE = timedelta(days=7)
 REFRESH_SECRET = os.getenv("REFRESH_TOKEN_SECRET", "change-this-refresh-secret")
@@ -60,6 +76,11 @@ VERIFIED_EMAIL_EXPIRY = 1800  # 30 minutes — how long a verified email stays v
 RATE_LIMIT_WINDOW = 900  # 15 minutes
 RATE_LIMIT_MAX_SENDS = 5  # max OTP sends per email per window
 RATE_LIMIT_MAX_ATTEMPTS = 5  # max OTP verify attempts per email
+
+_OTP_SEND_LIMIT = [Depends(rate_limit_strict(5, 900))]
+_OTP_VERIFY_LIMIT = [Depends(rate_limit_strict(10, 900))]
+_REGISTER_LIMIT = [Depends(rate_limit_strict(5, 300))]
+_LOGIN_LIMIT = [Depends(rate_limit_strict(10, 60))]
 
 
 def create_refresh_token(register_number: str) -> str:
@@ -82,6 +103,7 @@ class RegistrationOTPRequest(BaseModel):
 
 
 class RegistrationOTPVerify(BaseModel):
+    register_number: str
     email: str
     otp: str
 
@@ -113,9 +135,10 @@ def verify_register_number(register_number: str, db: Session = Depends(get_db)):
 # POST /auth/send-registration-otp — Send OTP to email
 # ============================================================
 
-@router.post("/send-registration-otp")
+@router.post("/send-registration-otp", dependencies=_OTP_SEND_LIMIT)
 async def send_registration_otp(
     data: RegistrationOTPRequest,
+    db: Session = Depends(get_db),
 ):
     """
     Generate a 6-digit OTP and send it to the student's email for registration verification.
@@ -126,8 +149,34 @@ async def send_registration_otp(
             status_code=500, detail="Redis connection failed. OTP cannot be stored."
         )
 
-    # Rate limiting: check how many OTPs have been sent to this email recently
-    rate_key = f"otp_rate:{data.email}"
+    reg_number = _normalize_register_number(data.register_number)
+    email = _normalize_email(data.email)
+
+    official = db.query(OfficialRecord).filter(
+        OfficialRecord.register_number == reg_number
+    ).first()
+    if not official:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Register number not found in official records",
+        )
+
+    official_email = _normalize_email(official.official_email)
+    if email != official_email:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="OTP can only be sent to the official email linked to this register number.",
+        )
+
+    existing = db.query(UserProfile).filter(UserProfile.register_number == reg_number).first()
+    if existing:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="An account already exists for this register number.",
+        )
+
+    # Rate limiting: check how many OTPs have been sent to this register/email recently
+    rate_key = f"otp_rate:{reg_number}:{email}"
     send_count = redis_client.get(rate_key)
     if send_count and int(send_count) >= RATE_LIMIT_MAX_SENDS:
         raise HTTPException(
@@ -136,12 +185,15 @@ async def send_registration_otp(
         )
 
     otp = str(secrets.randbelow(900000) + 100000)
+
+    otp_key = f"reg_otp:{reg_number}:{email}"
+    attempt_key = f"otp_attempts:{reg_number}:{email}"
     
     # Store OTP in Redis with expiration
-    redis_client.setex(f"reg_otp:{data.email}", OTP_EXPIRY_SECONDS, otp)
+    redis_client.setex(otp_key, OTP_EXPIRY_SECONDS, otp)
     
     # Reset attempt counter for this new OTP
-    redis_client.delete(f"otp_attempts:{data.email}")
+    redis_client.delete(attempt_key)
 
     # Increment rate limit counter
     if send_count:
@@ -151,24 +203,24 @@ async def send_registration_otp(
 
     try:
         await send_registration_otp_email(
-            to_email=data.email,
+            to_email=official.official_email,
             otp_code=otp,
-            student_id=data.register_number,
+            student_id=reg_number,
         )
     except Exception as e:
-        logger.exception("Error sending registration OTP to %s", data.email)
+        logger.exception("Error sending registration OTP to %s", official.official_email)
         raise HTTPException(
             status_code=500, detail="Failed to send OTP email. Please try again later."
         )
 
-    return {"sent": True, "message": f"OTP sent to {data.email}"}
+    return {"sent": True, "message": f"OTP sent to {_mask_email(official.official_email)}"}
 
 
 # ============================================================
 # POST /auth/verify-registration-otp — Verify the email OTP
 # ============================================================
 
-@router.post("/verify-registration-otp")
+@router.post("/verify-registration-otp", dependencies=_OTP_VERIFY_LIMIT)
 def verify_registration_otp(data: RegistrationOTPVerify):
     """
     Verify the OTP entered by the user during registration.
@@ -177,19 +229,23 @@ def verify_registration_otp(data: RegistrationOTPVerify):
     if not redis_client:
          raise HTTPException(status_code=500, detail="Redis is not connected.")
 
+    reg_number = _normalize_register_number(data.register_number)
+    email = _normalize_email(data.email)
+    otp_key = f"reg_otp:{reg_number}:{email}"
+    attempt_key = f"otp_attempts:{reg_number}:{email}"
+
     # Check attempt count
-    attempt_key = f"otp_attempts:{data.email}"
     attempts = redis_client.get(attempt_key)
     if attempts and int(attempts) >= RATE_LIMIT_MAX_ATTEMPTS:
         # Invalidate OTP after too many failed attempts
-        redis_client.delete(f"reg_otp:{data.email}")
+        redis_client.delete(otp_key)
         redis_client.delete(attempt_key)
         raise HTTPException(
             status_code=status.HTTP_429_TOO_MANY_REQUESTS,
             detail="Too many failed attempts. OTP has been invalidated. Please request a new one."
         )
 
-    stored_otp = redis_client.get(f"reg_otp:{data.email}")
+    stored_otp = redis_client.get(otp_key)
 
     if not stored_otp:
         raise HTTPException(
@@ -197,7 +253,7 @@ def verify_registration_otp(data: RegistrationOTPVerify):
             detail="OTP is invalid or has expired. Please request a new one."
         )
 
-    if stored_otp != data.otp:
+    if not hmac.compare_digest(stored_otp, data.otp.strip()):
         # Increment attempt counter
         if attempts:
             redis_client.incr(attempt_key)
@@ -211,9 +267,9 @@ def verify_registration_otp(data: RegistrationOTPVerify):
         )
 
     # OTP verified -- remove OTP from Redis and mark email as verified temporarily
-    redis_client.delete(f"reg_otp:{data.email}")
+    redis_client.delete(otp_key)
     redis_client.delete(attempt_key)
-    redis_client.setex(f"reg_verified:{data.email}", VERIFIED_EMAIL_EXPIRY, "true")
+    redis_client.setex(f"reg_verified:{reg_number}:{email}", VERIFIED_EMAIL_EXPIRY, "true")
 
     return {"verified": True, "message": "Email verified successfully!"}
 
@@ -222,7 +278,7 @@ def verify_registration_otp(data: RegistrationOTPVerify):
 # POST /auth/register — Signup
 # ============================================================
 
-@router.post("/register", response_model=TokenResponse, status_code=status.HTTP_201_CREATED)
+@router.post("/register", response_model=TokenResponse, status_code=status.HTTP_201_CREATED, dependencies=_REGISTER_LIMIT)
 def register_user(data: UserSignup, request: Request, db: Session = Depends(get_db)):
     """
     Register a new user.
@@ -240,13 +296,16 @@ def register_user(data: UserSignup, request: Request, db: Session = Depends(get_
                 detail="Invalid phone number. Must be a 10-digit Indian mobile number."
             )
 
-    # Step 0.5: Verify email was OTP-verified
-    email = data.personal_mail_id.strip()
+    reg_number = _normalize_register_number(data.register_number)
+    email = _normalize_email(data.personal_mail_id)
+
+    # Step 0.5: Verify email was OTP-verified for the same register number
     
     if not redis_client:
          raise HTTPException(status_code=500, detail="Redis is not connected.")
 
-    is_verified = redis_client.get(f"reg_verified:{email}")
+    verified_key = f"reg_verified:{reg_number}:{email}"
+    is_verified = redis_client.get(verified_key)
     
     if not is_verified:
         raise HTTPException(
@@ -254,10 +313,9 @@ def register_user(data: UserSignup, request: Request, db: Session = Depends(get_
             detail="Email has not been verified. Please complete OTP verification first."
         )
     # Consume the verification (one-time use)
-    redis_client.delete(f"reg_verified:{email}")
+    redis_client.delete(verified_key)
 
     # Step 1: Verify against Official DB
-    reg_number = data.register_number.strip().upper()
     official = db.query(OfficialRecord).filter(
         OfficialRecord.register_number == reg_number
     ).first()
@@ -295,7 +353,7 @@ def register_user(data: UserSignup, request: Request, db: Session = Depends(get_
         register_number=reg_number,
         username=data.username,
         hashed_password=hash_password(data.password),
-        personal_mail_id=data.personal_mail_id,
+        personal_mail_id=email,
         phone_number=data.phone_number,
     )
     db.add(new_user)
@@ -332,7 +390,7 @@ def register_user(data: UserSignup, request: Request, db: Session = Depends(get_
 # POST /auth/login — Login
 # ============================================================
 
-@router.post("/login", response_model=TokenResponse)
+@router.post("/login", response_model=TokenResponse, dependencies=_LOGIN_LIMIT)
 def login_user(data: UserLogin, request: Request, db: Session = Depends(get_db)):
     """
     Authenticate user with register number (studentId) and password.
@@ -353,6 +411,18 @@ def login_user(data: UserLogin, request: Request, db: Session = Depends(get_db))
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid register number or password"
+        )
+
+    if getattr(user, "is_deleted", False):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="This account is unavailable."
+        )
+
+    if getattr(user, "is_suspended", False):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="This account is suspended. Contact support."
         )
 
     # Verify password

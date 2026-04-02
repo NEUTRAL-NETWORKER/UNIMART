@@ -20,7 +20,7 @@ from admin_schemas import (
     PaginatedResponse, AuditLogView,
 )
 from database import get_db
-from middleware.rate_limit import rate_limit_strict
+from middleware.rate_limit import rate_limit_strict, get_request_ip
 from models import OfficialRecord, UserProfile, Product, Order
 
 router = APIRouter(prefix="/admin", tags=["Admin"])
@@ -43,11 +43,7 @@ def _log(
 ) -> None:
     ip = None
     if request:
-        ip = request.headers.get("X-Forwarded-For", "")
-        if ip:
-            ip = ip.split(",")[0].strip()
-        else:
-            ip = request.client.host if request.client else None
+        ip = get_request_ip(request)
     db.add(AdminAuditLog(
         admin_id=admin.id,
         admin_username=admin.username,

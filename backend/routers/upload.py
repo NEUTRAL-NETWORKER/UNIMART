@@ -5,6 +5,8 @@ from models import UserProfile
 import cloudinary
 import cloudinary.uploader
 import os
+import io
+from PIL import Image, UnidentifiedImageError
 
 router = APIRouter(prefix="/upload", tags=["Upload"])
 
@@ -18,15 +20,39 @@ cloudinary.config(
 
 # Allowed image types
 ALLOWED_TYPES = {"image/jpeg", "image/png", "image/webp", "image/gif"}
+ALLOWED_FORMATS = {"JPEG", "PNG", "WEBP", "GIF"}
 MAX_FILE_SIZE = 5 * 1024 * 1024  # 5MB
 
 
-def validate_image(file: UploadFile) -> None:
-    """Validate uploaded image file."""
+def validate_image(file: UploadFile, contents: bytes) -> None:
+    """Validate uploaded image file by MIME type and image bytes."""
     if file.content_type not in ALLOWED_TYPES:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"Invalid file type. Allowed: {', '.join(ALLOWED_TYPES)}"
+        )
+
+    if not contents:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Empty file upload is not allowed"
+        )
+
+    try:
+        with Image.open(io.BytesIO(contents)) as img:
+            img.verify()
+        with Image.open(io.BytesIO(contents)) as img:
+            img_format = (img.format or "").upper()
+    except (UnidentifiedImageError, OSError, ValueError):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid image file"
+        )
+
+    if img_format not in ALLOWED_FORMATS:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Unsupported image format. Allowed formats: {', '.join(ALLOWED_FORMATS)}"
         )
 
 
@@ -36,8 +62,6 @@ async def upload_single_image(
     current_user: UserProfile = Depends(get_current_user)
 ):
     """Upload a single image to Cloudinary. Returns the secure URL."""
-    validate_image(file)
-
     # Read file content
     contents = await file.read()
 
@@ -47,6 +71,8 @@ async def upload_single_image(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"File too large. Maximum size: {MAX_FILE_SIZE // (1024*1024)}MB"
         )
+
+    validate_image(file, contents)
 
     try:
         # Upload to Cloudinary
@@ -67,10 +93,10 @@ async def upload_single_image(
             "width": result.get("width"),
             "height": result.get("height"),
         }
-    except Exception as e:
+    except Exception:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Upload failed: {str(e)}"
+            detail="Upload failed. Please try again."
         )
 
 
@@ -95,7 +121,6 @@ async def upload_multiple_images(
     uploaded_urls = []
 
     for file in files:
-        validate_image(file)
         contents = await file.read()
 
         if len(contents) > MAX_FILE_SIZE:
@@ -103,6 +128,8 @@ async def upload_multiple_images(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail=f"File '{file.filename}' too large. Maximum size: {MAX_FILE_SIZE // (1024*1024)}MB"
             )
+
+        validate_image(file, contents)
 
         try:
             result = cloudinary.uploader.upload(
@@ -116,10 +143,10 @@ async def upload_multiple_images(
                 ]
             )
             uploaded_urls.append(result["secure_url"])
-        except Exception as e:
+        except Exception:
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail=f"Upload failed for '{file.filename}': {str(e)}"
+                detail=f"Upload failed for '{file.filename}'. Please try again."
             )
 
     return {"urls": uploaded_urls}
