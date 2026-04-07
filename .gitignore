@@ -14,6 +14,10 @@ frontend/.vite/
 # Environment variables (keep examples tracked)
 .env
 .env.*
+backend/.env
+backend/.env.*
+frontend/.env
+frontend/.env.*
 !.env.example
 !backend/.env.example
 !frontend/.env.example
@@ -70,3 +74,9 @@ git_status_utf8.txt
 
 # Prompt/script files (may contain sensitive info)
 PROMPT/
+
+# Sensitive local datasets
+backend/official_data.csv
+
+# Runtime uploaded assets
+backend/uploads/

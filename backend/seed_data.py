@@ -26,8 +26,13 @@ def seed_official_records():
         db.close()
         return
 
-    # Path to the official data CSV
-    csv_path = os.path.join(os.path.dirname(__file__), "official_data.csv")
+    # Resolve CSV path from env so private datasets can stay outside Git.
+    csv_file = os.getenv("OFFICIAL_RECORDS_CSV", "official_data.csv").strip()
+    csv_path = (
+        csv_file
+        if os.path.isabs(csv_file)
+        else os.path.join(os.path.dirname(__file__), csv_file)
+    )
     
     if not os.path.exists(csv_path):
         logger.error("Official records CSV not found: %s", csv_path)

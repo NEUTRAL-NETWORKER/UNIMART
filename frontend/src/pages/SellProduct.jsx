@@ -107,6 +107,11 @@ export default function SellProduct() {
     setErrors({ ...errors, [field]: '' });
   };
 
+  const handlePriceChange = (value) => {
+    const sanitized = value.replace(/[^\d]/g, '');
+    updateField('price', sanitized);
+  };
+
   const toggleFree = () => {
     setIsFree(!isFree);
     if (!isFree) {
@@ -217,15 +222,16 @@ export default function SellProduct() {
               <Input
                 label="Price (₹)"
                 name="price"
-                type="number"
+                type="text"
                 placeholder="0"
                 value={formData.price}
-                onChange={(e) => updateField('price', e.target.value)}
+                onChange={(e) => handlePriceChange(e.target.value)}
                 error={errors.price}
                 icon={IndianRupee}
                 required
-                min="1"
-                step="1"
+                inputMode="numeric"
+                pattern="[0-9]*"
+                autoComplete="off"
               />
             )}
             {isFree && (

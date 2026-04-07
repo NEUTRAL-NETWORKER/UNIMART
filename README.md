@@ -1,112 +1,112 @@
-# UNIMART // DIGITAL MARKET GRID
+# UNIMART // VERIFIED CAMPUS MARKETPLACE
 
-![Frontend](https://img.shields.io/badge/Frontend-React%2018%20%2B%20Vite%205-06b6d4?style=for-the-badge&logo=react)
-![Backend](https://img.shields.io/badge/Backend-FastAPI%20%2B%20SQLAlchemy-10b981?style=for-the-badge&logo=fastapi)
-![Data](https://img.shields.io/badge/Data-PostgreSQL%20%2B%20Redis-334155?style=for-the-badge&logo=postgresql)
-![Auth](https://img.shields.io/badge/Auth-JWT%20Access%20%2B%20Refresh-0ea5e9?style=for-the-badge)
-![CI](https://img.shields.io/badge/CI-GitHub%20Actions-111827?style=for-the-badge&logo=githubactions)
+<div align="center">
+  <img src="https://capsule-render.vercel.app/api?type=waving&height=240&color=0:061427,40:0e4b75,100:00b9d6&text=UNIMART&fontColor=e8fbff&fontSize=58&animation=twinkling&fontAlignY=38&desc=Secure%20Student%20Commerce%20Platform&descAlignY=60" alt="UNIMART banner" />
 
-UNIMART is a verified student-to-student marketplace with private order chat, OTP-based handoff completion, in-app notifications, and a DB-backed admin panel.
+  <p>
+    <img src="https://readme-typing-svg.demolab.com?font=Space+Mono&weight=700&size=20&duration=2400&pause=650&color=00D9FF&center=true&vCenter=true&width=1080&lines=Verified+Students+Only+Marketplace;Private+Buyer+Seller+Chat+per+Order;OTP+Protected+Delivery+Completion;FastAPI+%2B+React+%2B+PostgreSQL+%2B+Redis" alt="Animated intro" />
+  </p>
 
-## 01. System Snapshot
+  <p>
+    <img src="https://img.shields.io/badge/Frontend-React%2018%20%2B%20Vite-00a6d6?style=for-the-badge&logo=react&logoColor=white" alt="Frontend" />
+    <img src="https://img.shields.io/badge/Backend-FastAPI-1ea672?style=for-the-badge&logo=fastapi&logoColor=white" alt="Backend" />
+    <img src="https://img.shields.io/badge/Database-PostgreSQL-2f3f56?style=for-the-badge&logo=postgresql&logoColor=white" alt="Database" />
+    <img src="https://img.shields.io/badge/Realtime-Redis-8b1f2e?style=for-the-badge&logo=redis&logoColor=white" alt="Redis" />
+    <img src="https://img.shields.io/badge/Security-JWT%20%2B%20OTP-0b7fab?style=for-the-badge" alt="Security" />
+  </p>
+</div>
 
-- Frontend: React 18, Vite 5, React Router, Axios, Tailwind, Framer Motion.
-- Backend: FastAPI, SQLAlchemy, Alembic, JWT auth, APScheduler.
-- Data and services: PostgreSQL, Redis, SMTP, Cloudinary.
-- API base path: /api.
-- Health endpoint: /api/health.
+UNIMART is a production-style campus commerce platform where verified students can list products, place orders, communicate inside private order chat, and close delivery with OTP confirmation.
 
-## 02. Architecture Pulse
+## Why This Project Stands Out
 
-```text
-Browser (React + Vite)
-        |
-        | HTTPS / JSON
-        v
-FastAPI app (backend/main.py)
-  |- /auth, /products, /orders, /chat
-  |- /otp, /notifications, /upload, /admin
-  |
-  |- PostgreSQL (core transactional data)
-  |- Redis (registration OTP + delivery OTP + attempt counters)
-  |- SMTP (registration and delivery emails)
-  |- Cloudinary (product image storage)
+- Student verification-first access model.
+- Strict order lifecycle with role-safe status transitions.
+- Private buyer/seller communication channels linked to each order.
+- OTP handoff confirmation to reduce fake delivery claims.
+- Admin governance tools for oversight and moderation.
 
-Scheduler process (backend/run_scheduler.py)
-  |- cleanup sold-out products (24h interval)
-  |- cleanup completed-order chats (1h interval)
+## End-to-End Flow
+
+```mermaid
+flowchart LR
+    A[Student Registration] --> B[Account Verification]
+    B --> C[Browse or List Products]
+    C --> D[Order Placement]
+    D --> E[Private Order Chat]
+    E --> F[Seller Shares OTP]
+    F --> G[Buyer Confirms Delivery]
+    G --> H[Order Completed + Notification]
 ```
 
-## 03. Feature Surface
+## Platform Architecture
 
-| Module | Capabilities | Main Paths |
+```mermaid
+flowchart TB
+    UI[React + Vite Frontend] --> API[FastAPI Service /api]
+    API --> DB[(PostgreSQL)]
+    API --> CACHE[(Redis)]
+    API --> MAIL[SMTP Service]
+    API --> MEDIA[Cloudinary]
+    WORKER[APScheduler Worker] --> API
+```
+
+## API Domains
+
+| Domain | Route Prefix | Responsibility |
 |---|---|---|
-| Authentication | register/login/profile, refresh token | /api/auth/* |
-| Products | list/search/create/update/delete/my items | /api/products/* |
-| Orders | place, buyer list, seller list, confirm, cancel | /api/orders/* |
-| Chat | order-scoped private messaging | /api/chat/{order_id} |
-| OTP Handoff | generate, send-email, verify completion | /api/otp/* |
-| Notifications | feed, unread count, mark read, delete | /api/notifications/* |
-| Upload | single and multi-image upload | /api/upload/image, /api/upload/images |
-| Admin | login, stats, moderation, audit logs | /api/admin/* |
+| Authentication | /api/auth | Register, login, token management |
+| Products | /api/products | Create, list, search, update product records |
+| Orders | /api/orders | Buyer purchase flow and status lifecycle |
+| Chat | /api/chat | Order-scoped communication |
+| OTP | /api/otp | Secure handoff verification |
+| Notifications | /api/notifications | User event updates |
+| Upload | /api/upload | Product media uploads |
+| Admin | /api/admin | Moderation and admin operations |
 
-## 04. Repository Layout
+## Tech Stack
+
+- Frontend: React 18, Vite, Tailwind CSS, Framer Motion, Axios, React Router.
+- Backend: FastAPI, SQLAlchemy, Alembic, APScheduler.
+- Storage and messaging: PostgreSQL, Redis.
+- Integrations: SMTP mail service, Cloudinary media hosting.
+- Developer workflow: GitHub Actions + local build and import checks.
+
+## Project Layout
 
 ```text
 .
 |- backend/
 |  |- routers/
-|  |- middleware/
 |  |- services/
+|  |- middleware/
 |  |- alembic/
-|  |- main.py
-|  |- models.py
-|  |- schemas.py
-|  |- settings.py
-|  |- run_scheduler.py
-|  |- requirements.txt
 |  \- .env.example
 |- frontend/
 |  |- src/
-|  |  |- admin/
-|  |  |- components/
-|  |  |- context/
-|  |  |- pages/
-|  |  |- routes/
-|  |  \- services/
-|  |- package.json
+|  |- public/
 |  \- .env.example
-|- DEPLOYMENT_CHECKLIST.md
-|- PROJECT_AUDIT_REPORT.md
-|- run_commands.txt
-|- start.bat
-|- start-backend.bat
-|- start-frontend.bat
-\- start-simple.bat
+|- docs/
+|  \- local-development-guide.md
+|- .github/workflows/
+\- README.md
 ```
 
-## 05. Local Boot Sequence
+## Local Setup
 
-### Prerequisites
-
-- Python 3.10+
-- Node.js 18+ (CI uses Node 20)
-- PostgreSQL 14+
-- Redis 7+
-
-### Backend (terminal 1)
+### 1. Backend
 
 ```powershell
 cd backend
-python -m venv venv
-venv\Scripts\activate
+python -m venv .venv
+.\.venv\Scripts\Activate
 pip install -r requirements.txt
 copy .env.example .env
 alembic upgrade head
 uvicorn main:app --host 0.0.0.0 --port 8000 --reload
 ```
 
-### Frontend (terminal 2)
+### 2. Frontend
 
 ```powershell
 cd frontend
@@ -115,130 +115,50 @@ copy .env.example .env.local
 npm run dev
 ```
 
-Set in frontend/.env.local:
+### 3. Local URLs
 
-```env
-VITE_API_URL=http://localhost:8000/api
-```
+- Frontend: http://localhost:5173
+- Backend API: http://localhost:8000/api
+- Swagger Docs: http://localhost:8000/docs
+- Health Endpoint: http://localhost:8000/api/health
 
-### One-click launcher options (Windows)
+## Environment Contract
 
-- start.bat
-- start-simple.bat
-- start-backend.bat
-- start-frontend.bat
-
-## 06. Environment Contract
-
-### Backend variables (production critical)
+Backend core variables:
 
 - DATABASE_URL
+- DB_ADMIN_USER, DB_ADMIN_PASSWORD, DB_HOST, DB_PORT, DB_NAME
 - REDIS_URL
-- SECRET_KEY (strong, non-placeholder)
-- REFRESH_TOKEN_SECRET (strong, non-placeholder)
-- ADMIN_JWT_SECRET (strong, non-placeholder)
-- ADMIN_USERNAME, ADMIN_PASSWORD, ADMIN_DISPLAY_NAME
+- SECRET_KEY, ALGORITHM, ACCESS_TOKEN_EXPIRE_MINUTES
+- REFRESH_TOKEN_SECRET
+- ADMIN_JWT_SECRET, ADMIN_USERNAME, ADMIN_PASSWORD, ADMIN_DISPLAY_NAME
 - SMTP_SERVER, SMTP_PORT, SMTP_EMAIL, SMTP_PASSWORD
 - CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, CLOUDINARY_API_SECRET
-- APP_ENV=production
-- ENABLE_SCHEDULER=false on API workers
-- CORS_ORIGINS set to deployed frontend domains
+- APP_ENV, ENVIRONMENT, LOG_LEVEL, ENABLE_SCHEDULER
+- CORS_ORIGINS
+- OFFICIAL_RECORDS_CSV
 
-### Frontend variables
+Frontend variables:
 
-- VITE_API_URL (must target backend /api base)
-- VITE_APP_BASENAME (`/` for root hosting, repository name for GitHub Pages)
+- VITE_API_URL
+- VITE_APP_BASENAME
 
-## 07. API Map
+## Sensitive Data Policy
 
-| Domain | Prefix | Selected Endpoints |
-|---|---|---|
-| Auth | /api/auth | verify/{register_number}, send-registration-otp, verify-registration-otp, register, login, refresh, profile |
-| Products | /api/products | /, /my, /search, /{product_id} |
-| Orders | /api/orders | /, /buyer, /seller, /{id}, /{id}/status, /{id}/cancel |
-| Chat | /api/chat | /{order_id} (GET, POST) |
-| OTP | /api/otp | /generate, /send-email, /verify |
-| Notifications | /api/notifications | /, /unread-count, /read-all, /{id}/read, /{id} |
-| Upload | /api/upload | /image, /images |
-| Admin | /api/admin | /auth/login, /dashboard/stats, /users, /products, /orders, /audit-logs |
+- `backend/official_data.csv` is treated as local/private dataset input.
+- The file is ignored by Git and removed from tracking to prevent accidental push of official records.
+- Use `OFFICIAL_RECORDS_CSV` in backend `.env` to point to your local dataset path (relative or absolute).
 
-## 08. Order + OTP State Machine
+## Quality Checks Run
 
-```text
-PENDING --seller confirms--> CONFIRMED --OTP verify--> COMPLETED
-PENDING -------------------> CANCELLED
-CONFIRMED -----------------> CANCELLED
-```
+- Backend syntax/import check completed by Python compile/import smoke validation.
+- Frontend production build completed successfully.
+- Result: project compiles and starts, with one non-blocking Vite chunk-size warning for bundle optimization.
 
-Rules enforced by backend:
+## Documentation
 
-- Only seller can move PENDING -> CONFIRMED.
-- COMPLETED cannot be set directly via order status endpoint.
-- OTP verify endpoint is required for completion.
-- Product transitions follow order lifecycle: AVAILABLE -> RESERVED -> SOLD_OUT (or back to AVAILABLE on cancel).
+- Local development runbook: docs/local-development-guide.md
 
-## 09. Scheduler and Data Retention
+## License
 
-- Job 1 (24h): soft-delete SOLD_OUT products older than 7 days by setting DELETED.
-- Job 2 (1h): delete chat messages for COMPLETED orders older than 24 hours.
-- Recommended production model:
-  - API workers with ENABLE_SCHEDULER=false
-  - one dedicated scheduler process via python run_scheduler.py
-
-## 10. CI and Quality Gates
-
-GitHub Actions workflow (.github/workflows/ci.yml) runs:
-
-- Frontend job: npm ci + npm run build
-- Backend job: pip install -r requirements.txt + python -m compileall . + import smoke check
-
-GitHub deployment workflow (.github/workflows/deploy.yml) runs on `main`:
-
-- Builds and publishes backend image to GHCR (`ghcr.io/<owner>/unimart-backend`)
-- Deploys frontend to GitHub Pages
-- Optionally triggers backend platform deploy hook if configured
-
-Current CI does not run full unit/integration tests.
-
-## 11. Deployment
-
-Use DEPLOYMENT_CHECKLIST.md as the release gate.
-
-Minimum GitHub release flow:
-
-1. Recommended: set repository variable or secret `FRONTEND_VITE_API_URL=https://<backend-domain>/api`.
-2. Optional: set repository variable `ENABLE_BACKEND_IMAGE_PUBLISH=true` to publish backend image to GHCR.
-3. Optional: configure secret `BACKEND_DEPLOY_HOOK_URL` for Render/Railway/Fly deploy webhook.
-4. Push to `main` (or run workflow dispatch for `.github/workflows/deploy.yml`).
-5. Apply migrations on backend target: `alembic upgrade head`.
-6. Validate health endpoint and login flow.
-7. Start only one scheduler process.
-8. Run post-deploy smoke checks for orders, OTP, and notifications.
-
-Local/manual release flow:
-
-1. Apply migrations: alembic upgrade head.
-2. Validate health endpoint and login flow.
-3. Start only one scheduler process.
-4. Run post-deploy smoke checks for orders, OTP, and notifications.
-
-## 12. Troubleshooting Grid
-
-| Symptom | Likely Cause | Quick Action |
-|---|---|---|
-| 401 loops | expired access + invalid refresh token | clear local storage, login again, verify REFRESH_TOKEN_SECRET |
-| OTP generate/verify fails | Redis down or key expired | verify REDIS_URL service and retry generate |
-| Image upload fails | Cloudinary creds missing/invalid | validate CLOUDINARY_* values |
-| CORS blocked in browser | bad or empty CORS_ORIGINS in prod | set exact frontend domains |
-| Registration OTP email fails | SMTP auth/port/provider issue | verify SMTP config and sender policy |
-
-## 13. Security Notes
-
-- Production startup enforces strong secrets through backend/settings.py checks.
-- Keep JWT secrets and SMTP credentials out of source control.
-- Restrict CORS to known domains only.
-- Prefer HTTPS termination at ingress/load balancer.
-
-## 14. License
-
-This project is licensed under the Apache License 2.0.
+Apache License 2.0

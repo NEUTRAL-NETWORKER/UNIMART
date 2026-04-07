@@ -1,10 +1,12 @@
 from fastapi import FastAPI, Request, Depends
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 import redis
 import os
 import logging
 from contextlib import asynccontextmanager
+from pathlib import Path
 from sqlalchemy.orm import Session
 from database import engine, Base, get_db
 from models import UserProfile
@@ -71,6 +73,11 @@ app = FastAPI(
     version="1.0.0",
     lifespan=lifespan,
 )
+
+# Static mount for development upload fallback.
+uploads_dir = Path(__file__).resolve().parent / "uploads"
+uploads_dir.mkdir(parents=True, exist_ok=True)
+app.mount("/api/uploads", StaticFiles(directory=str(uploads_dir)), name="uploads")
 
 # ============================================================
 # CORS MIDDLEWARE (Environment-based origins)
