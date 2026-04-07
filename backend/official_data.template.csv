@@ -1,0 +1,4 @@
+register_no,name,university,college,department,email
+REG2026CSE001,Sample Student One,Example University,Engineering,CSE,student.one@example.edu
+REG2026ECE002,Sample Student Two,Example University,Engineering,ECE,student.two@example.edu
+REG2026BBA003,Sample Student Three,Example University,Business,BBA,student.three@example.edu

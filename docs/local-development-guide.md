@@ -73,3 +73,4 @@ python run_scheduler.py
 - Redis and PostgreSQL must be running for OTP and order lifecycle features.
 - Keep a single scheduler instance running at any time.
 - Keep official records CSV private and local. Configure `OFFICIAL_RECORDS_CSV` in backend `.env` (default: `official_data.csv`).
+- Copy `backend/official_data.template.csv` to a private file (for example `backend/official_data.csv`) and populate real records locally.

@@ -148,12 +148,13 @@ Frontend variables:
 - `backend/official_data.csv` is treated as local/private dataset input.
 - The file is ignored by Git and removed from tracking to prevent accidental push of official records.
 - Use `OFFICIAL_RECORDS_CSV` in backend `.env` to point to your local dataset path (relative or absolute).
+- Start from `backend/official_data.template.csv`, then create your private working CSV locally.
 
 ## Quality Checks Run
 
 - Backend syntax/import check completed by Python compile/import smoke validation.
 - Frontend production build completed successfully.
-- Result: project compiles and starts, with one non-blocking Vite chunk-size warning for bundle optimization.
+- Result: route-level code splitting and manual chunking are active, and the prior Vite large-chunk warning is resolved.
 
 ## Documentation
 
