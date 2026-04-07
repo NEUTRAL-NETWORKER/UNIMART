@@ -35,9 +35,7 @@ def seed_official_records():
     )
     
     if not os.path.exists(csv_path):
-        template_path = os.path.join(os.path.dirname(__file__), "official_data.template.csv")
         logger.error("Official records CSV not found: %s", csv_path)
-        logger.info("Create a private CSV from template: %s", template_path)
         db.close()
         return
 
