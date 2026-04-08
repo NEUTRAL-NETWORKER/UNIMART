@@ -155,10 +155,6 @@ Frontend variables:
 - Frontend production build completed successfully.
 - Result: project compiles and starts, with one non-blocking Vite chunk-size warning for bundle optimization.
 
-## Documentation
-
-- Local development runbook: docs/local-development-guide.md
-
 ## License
 
 Apache License 2.0
